@@ -33,25 +33,6 @@ Builder.load_string("""
             id:startansicht 
             size_hint:(1,1)
             orientation:'lr-tb'
-            # Button :
-            #     text: "+" 
-            #     size_hint: (1/3, None)
-            #     on_press: root.edit()
-            # Button :
-            #     text: "-" 
-            #     size_hint: (1/3, None)
-            #     on_press: root.delete()
-            # Button :
-            #     size_hint: (1/3, None)
-            #     on_press: root.edit(auto=root.auto)
-            #     Image:
-            #         source: 'pen.png'
-            #         size: 100,100
-            #         y: self.parent.y 
-            #         x: self.parent.x + self.parent.size[0]/2 - self.size[0]/2
-            # StackLayout:
-            #     id:listenansicht
-            #     orientation: 'lr-tb'
                 
     TabbedPanelItem:
         id: schadensaufnahme
@@ -68,7 +49,15 @@ Builder.load_string("""
 
 <Karosserie>
     orientation:'lr-tb'
- 
+
+<EditButton>
+    size_hint: (1/3, None)
+    # on_press: root.parent.edit(auto=root.auto)
+    Image:
+        source: 'pen.png'
+        size: self.parent.height*0.7,self.parent.height*0.7
+        y: self.parent.y + self.parent.size[1]/2 - self.size[1]/2
+        x: self.parent.x + self.parent.size[0]/2 - self.size[0]/2
 """)
 def set_aw10(y, x):
     y.aw10 = x
@@ -139,6 +128,8 @@ class Auto(ToggleButton):
         content = self.parent.parent.parent.parent
         content.auto = self
     
+class EditButton(Button):
+    pass
 class Karosserie(StackLayout):
     pass
 class Schaden(StackLayout):
@@ -160,7 +151,7 @@ class Tabs(TabbedPanel):
         self.auto= self.auto_liste[0]
         self.auto.state='down'
         
-    def listenansicht(self):
+    def listenansicht(self, *args):
         content=self.ids.startansicht
         content.clear_widgets()
         content.add_widget(
@@ -174,19 +165,13 @@ class Tabs(TabbedPanel):
             background_color=( 1,0, 0)))
         b.bind(on_press= self.delete)
         content.add_widget(
-            b:=Button(text='',
-            size_hint=(1/3,.1), 
-            background_color=( .5,.5, 1)
-            ))
-        b.add_widget(i:=Image(
-            size_hint=(1/3,.1), 
-            source='pen.png', pos=b.pos))
-        b.bind(on_press= self.edit)
+            b:=EditButton(size_hint=(1/3,.1)))
+        b.bind(on_press= partial(self.edit,self.auto))
         for auto in self.auto_liste:
             content.add_widget(
                 auto
             )
-    def edit(self, auto=Auto() ):
+    def edit(self, auto=Auto(), button=None ):
         content=self.ids.startansicht
         content.clear_widgets() 
         content.add_widget(
@@ -204,29 +189,33 @@ class Tabs(TabbedPanel):
             ToggleButton(text='12 AW', 
             size_hint=( .5,.1),group='aw'))  
         content.add_widget(
-            Button(text='Fertig',
+            b:=Button(text='Fertig',
             size_hint=(.5,.1), 
             background_color=(0, 1,0)))
+        b.bind(on_press= self.listenansicht)
         content.add_widget(
-            Button(text='Abbrechen',
+            b:=Button(text='Abbrechen',
             size_hint=(.5,.1), 
             background_color=( 1,0, 0)))
+        b.bind(on_press= self.listenansicht)
         
         
-    def delete(self):
+    def delete(self, button):
         content=self.ids.startansicht
         content.clear_widgets()
         content.add_widget(
             Label(text='Möchtest du das Auto wirklich löschen? ', 
             size_hint=( 1,.1)))  
         content.add_widget(
-            Button(text='Ja',
+            b:=Button(text='Ja',
             size_hint=(.5,.1), 
             background_color=(0, 1,0)))
+        b.bind(on_press= self.listenansicht)
         content.add_widget(
-            Button(text='Nein',
+            b:=Button(text='Nein',
             size_hint=(.5,.1), 
             background_color=(1, 0,0))) 
+        b.bind(on_press= self.listenansicht)
     
     def calc(self, teil, x):
         content=self.ids.schadensaufnahme.content
