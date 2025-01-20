@@ -25,22 +25,24 @@ Builder.load_string("""
     tab_width: root.width/3
         
     TabbedPanelItem:
-        #id:listenansicht
         text: 'Autos'
         size_hint: (0.1, 0.1)
         on_state: if self.state=='down' : root.listenansicht()
         StackLayout:
-            minimum_height: 32
-            size_hint:(1,None)
+            id:startansicht 
+            size_hint:(1,1)
             orientation:'lr-tb'
             Button :
                 text: "+" 
-                size_hint: (.33, None)
+                size_hint: (1/3, None)
+                on_press: root.edit()
             Button :
                 text: "-" 
-                size_hint: (.33, None)
+                size_hint: (1/3, None)
+                on_press: root.delete()
             Button :
-                size_hint: (.33, None)
+                size_hint: (1/3, None)
+                on_press: root.edit(auto=root.auto)
                 Image:
                     source: 'pen.png'
                     size: 100,100
@@ -49,20 +51,7 @@ Builder.load_string("""
             StackLayout:
                 id:listenansicht
                 orientation: 'lr-tb'
-                Auto:
-                    id: select
-                    text: 'Reno'
-                    group: 'auto'
-                    state:'down'
-                    on_press: root.auto=self
-                Auto:
-                    text: 'Porsche'
-                    group: 'auto'
-                    on_press: root.auto=self
-                Auto:
-                    text: 'Porsche 2'
-                    group: 'auto'
-                    on_press: root.auto=self
+                
     TabbedPanelItem:
         id: schadensaufnahme
         text: 'Karosserieteile'
@@ -80,12 +69,14 @@ Builder.load_string("""
     orientation:'lr-tb'
  
 """)
-
-def set_( delle,intinput,x):
+def set_aw10(y, x):
+    y.aw10 = x
+def set_anzahl( delle,intinput,x):
     if x == '':
         delle.anzahl =0
     else:
         delle.anzahl=int(x)
+        
 class IntInput(TextInput):
     pat = re.compile('[^0-9]')
     def insert_text(self, substring,
@@ -129,7 +120,7 @@ class Teil():
         self.alu = not self.alu
     
 class Auto(ToggleButton):
-    def __init__(self, **kwargs):
+    def __init__(self, aw10= True, **kwargs):
         if 'name' in kwargs:
             self.text = kwargs['name']
             kwargs.pop('name')
@@ -141,6 +132,8 @@ class Auto(ToggleButton):
             Teil('Tür v l') 
             ] 
         self.group='auto'
+        self.size_hint = 1,.05
+        self.aw10= aw10
     def on_press(self):
         content = self.parent.parent.parent.parent
         content.auto = self
@@ -163,7 +156,8 @@ class Tabs(TabbedPanel):
                     ]
     def __init__(self, **kwargs):
         super(Tabs, self).__init__(**kwargs)
-        self.auto= self.ids.select
+        self.auto= self.auto_liste[0]
+        self.auto.state='down'
         
     def listenansicht(self):
         content=self.ids.listenansicht
@@ -172,6 +166,45 @@ class Tabs(TabbedPanel):
             content.add_widget(
                 auto
             )
+    def edit(self, auto=Auto() ):
+        content=self.ids.startansicht
+        content.clear_widgets() 
+        content.add_widget(
+            Button(text='Name', 
+            size_hint=( .5,.1))) 
+        content.add_widget(
+            TextInput(size_hint=(.5,.1)))   
+        content.add_widget(
+            s:=ToggleButton(text='10 AW', 
+            size_hint=( .5,.1),group='aw', 
+            state='down')) 
+        content.add_widget(
+            ToggleButton(text='12 AW', 
+            size_hint=( .5,.1),group='aw'))  
+        content.add_widget(
+            Button(text='Fertig',
+            size_hint=(.5,.1), 
+            background_color=(0, 1,0)))
+        content.add_widget(
+            Button(text='Abbrechen',
+            size_hint=(.5,.1), 
+            background_color=( 1,0, 0)))
+        
+        
+    def delete(self):
+        content=self.ids.startansicht
+        content.clear_widgets()
+        content.add_widget(
+            Label(text='Möchtes du das Auto wirklich löschen? ', 
+            size_hint=( 1,.1)))  
+        content.add_widget(
+            Button(text='Ja',
+            size_hint=(.5,.1), 
+            background_color=(0, 1,0)))
+        content.add_widget(
+            Button(text='Nein',
+            size_hint=(.5,.1), 
+            background_color=(1, 0,0))) 
     
     def calc(self, teil, x):
         content=self.ids.schadensaufnahme.content
@@ -199,7 +232,7 @@ class Tabs(TabbedPanel):
             Ii =IntInput(
                 text=str(delle.anzahl) ,
                 size_hint=(.5, .05))
-            Ii.bind(text=partial(set_, delle))
+            Ii.bind(text=partial(set_anzahl, delle))
             content.add_widget(Ii)
         content.add_widget(
             Button(text='Fertig', 
