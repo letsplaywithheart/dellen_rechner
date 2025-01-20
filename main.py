@@ -45,7 +45,7 @@ Builder.load_string("""
         text: 'Arbeitsaufwand'
         on_state: if self.state=='down' : root.tabelle()
         StackLayout:
-            size_hint:(1,None)
+            size_hint:(1,1)
 
 <Karosserie>
     orientation:'lr-tb'
@@ -118,15 +118,21 @@ class Auto(ToggleButton):
         self.allow_no_selection=False
         self.teile=[
             Teil('Motorhaube'), 
-            Teil('Dach') ,
-            Teil('Tür v l') 
+            Teil('Dach'),
+            Teil('Tür vorne links'), 
+            Teil('Tür vorne rechts'),
+            Teil('Tür hinten links'),
+            Teil('Tür hinten rechts'), 
+            Teil('Kofferraum'),
             ] 
         self.group='auto'
         self.size_hint = 1,.05
         self.aw10= aw10
     def on_press(self):
-        content = self.parent.parent.parent.parent
+        content = self.parent.parent.parent
         content.auto = self
+    def set_name(self,textinput, value):
+        self.text= value
     
 class EditButton(Button):
     pass
@@ -166,12 +172,11 @@ class Tabs(TabbedPanel):
         b.bind(on_press= self.delete)
         content.add_widget(
             b:=EditButton(size_hint=(1/3,.1)))
-        b.bind(on_press= partial(self.edit,self.auto))
+        b.bind(on_press= partial(self.edit,new = False))
         for auto in self.auto_liste:
-            content.add_widget(
-                auto
-            )
-    def edit(self, auto=Auto(), button=None ):
+            content.add_widget(auto)
+    def edit(self, button ,new=True):
+        auto=Auto() if new else self.auto
         content=self.ids.startansicht
         content.clear_widgets() 
         content.add_widget(
@@ -179,8 +184,8 @@ class Tabs(TabbedPanel):
             size_hint=( .5,.1))) 
         content.add_widget(
             t:=TextInput(size_hint=(.5,.1),
-                multiline=False)) 
-        # t.bind(font_size=t.height*0.7)
+                multiline=False,text=auto.text)) 
+        t.bind(text=auto.set_name)
         content.add_widget(
             s:=ToggleButton(text='10 AW', 
             size_hint=( .5,.1),group='aw', 
@@ -192,14 +197,21 @@ class Tabs(TabbedPanel):
             b:=Button(text='Fertig',
             size_hint=(.5,.1), 
             background_color=(0, 1,0)))
-        b.bind(on_press= self.listenansicht)
+        b.bind(on_press= partial(self.add_Auto,auto))
         content.add_widget(
             b:=Button(text='Abbrechen',
             size_hint=(.5,.1), 
             background_color=( 1,0, 0)))
         b.bind(on_press= self.listenansicht)
-        
-        
+    def add_Auto(self, auto ,Button):
+        if auto in self.auto_liste:
+            self.listenansicht()
+        else:
+            self.auto.state= 'normal'
+            self.auto = auto
+            self.auto_liste.append(auto)
+            auto.state='down'
+            self.listenansicht()
     def delete(self, button):
         content=self.ids.startansicht
         content.clear_widgets()
@@ -210,13 +222,19 @@ class Tabs(TabbedPanel):
             b:=Button(text='Ja',
             size_hint=(.5,.1), 
             background_color=(0, 1,0)))
-        b.bind(on_press= self.listenansicht)
+        b.bind(on_press= self.delete_auto)
         content.add_widget(
             b:=Button(text='Nein',
             size_hint=(.5,.1), 
             background_color=(1, 0,0))) 
         b.bind(on_press= self.listenansicht)
-    
+    def delete_auto(self,button):
+        self.auto_liste.remove(self.auto)
+        if len(self.auto_liste)<=0:
+            self.auto_liste.append(Auto(name='Beispielauto'))
+        self.auto = self.auto_liste[0]
+        self.auto.state='down'
+        self.listenansicht()
     def calc(self, teil, x):
         content=self.ids.schadensaufnahme.content
         content.clear_widgets()
@@ -269,17 +287,26 @@ class Tabs(TabbedPanel):
         content=self.ids.tabelle.content
         content.clear_widgets()
         content.add_widget(
-            Button(text=self.auto.text))
+            Button(text=self.auto.text,
+            size_hint=(1,.2)))
+        content.add_widget(
+            Label(text='Teil',
+            size_hint=(.5,.1)))
+        content.add_widget(
+            Label(text='AW',
+            size_hint=(.5,.1)))
         for teil in self.auto.teile:
-            content.add_widget(
-                Button(text=teil.name,
-                    size_hint=(.5,None)))
             s = sum(x.anzahl for x in teil.dellen)
             a = sum(int((1+x) * teil.dellen[x].anzahl) for x in range(8)) 
             aw = aw12s[round(a/s/10+0.5)](a) if s >0 else 0
+            if aw ==0:
+                continue
+            content.add_widget(
+                Button(text=teil.name,
+                    size_hint=(.5,.1)))
             content.add_widget(
                 Button(text=str(aw) , 
-                size_hint=(.5,None)))
+                size_hint=(.5,.1)))
         pass
 
 class Test(BoxLayout):
