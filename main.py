@@ -6,6 +6,7 @@ from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.textinput import TextInput 
 from kivy.uix.togglebutton import ToggleButton
+from kivy.uix.image import Image
 from kivy.lang import Builder
 import re
 from dataclasses import dataclass
@@ -17,7 +18,7 @@ Builder.load_string("""
 
 <Test>:
     id:testview
-                    
+
 <Tabs>
     id:tabs
     tab_pos:'bottom_mid'
@@ -32,25 +33,25 @@ Builder.load_string("""
             id:startansicht 
             size_hint:(1,1)
             orientation:'lr-tb'
-            Button :
-                text: "+" 
-                size_hint: (1/3, None)
-                on_press: root.edit()
-            Button :
-                text: "-" 
-                size_hint: (1/3, None)
-                on_press: root.delete()
-            Button :
-                size_hint: (1/3, None)
-                on_press: root.edit(auto=root.auto)
-                Image:
-                    source: 'pen.png'
-                    size: 100,100
-                    y: self.parent.y 
-                    x: self.parent.x + self.parent.size[0]/2 - self.size[0]/2
-            StackLayout:
-                id:listenansicht
-                orientation: 'lr-tb'
+            # Button :
+            #     text: "+" 
+            #     size_hint: (1/3, None)
+            #     on_press: root.edit()
+            # Button :
+            #     text: "-" 
+            #     size_hint: (1/3, None)
+            #     on_press: root.delete()
+            # Button :
+            #     size_hint: (1/3, None)
+            #     on_press: root.edit(auto=root.auto)
+            #     Image:
+            #         source: 'pen.png'
+            #         size: 100,100
+            #         y: self.parent.y 
+            #         x: self.parent.x + self.parent.size[0]/2 - self.size[0]/2
+            # StackLayout:
+            #     id:listenansicht
+            #     orientation: 'lr-tb'
                 
     TabbedPanelItem:
         id: schadensaufnahme
@@ -64,7 +65,7 @@ Builder.load_string("""
         on_state: if self.state=='down' : root.tabelle()
         StackLayout:
             size_hint:(1,None)
-                        
+
 <Karosserie>
     orientation:'lr-tb'
  
@@ -160,8 +161,27 @@ class Tabs(TabbedPanel):
         self.auto.state='down'
         
     def listenansicht(self):
-        content=self.ids.listenansicht
+        content=self.ids.startansicht
         content.clear_widgets()
+        content.add_widget(
+            b:=Button(text='+',
+            size_hint=(1/3,.1), 
+            background_color=( 0,1, 0)))
+        b.bind(on_press= self.edit)
+        content.add_widget(
+            b:=Button(text='-',
+            size_hint=(1/3,.1), 
+            background_color=( 1,0, 0)))
+        b.bind(on_press= self.delete)
+        content.add_widget(
+            b:=Button(text='',
+            size_hint=(1/3,.1), 
+            background_color=( .5,.5, 1)
+            ))
+        b.add_widget(i:=Image(
+            size_hint=(1/3,.1), 
+            source='pen.png', pos=b.pos))
+        b.bind(on_press= self.edit)
         for auto in self.auto_liste:
             content.add_widget(
                 auto
@@ -173,7 +193,9 @@ class Tabs(TabbedPanel):
             Button(text='Name', 
             size_hint=( .5,.1))) 
         content.add_widget(
-            TextInput(size_hint=(.5,.1)))   
+            t:=TextInput(size_hint=(.5,.1),
+                multiline=False)) 
+        # t.bind(font_size=t.height*0.7)
         content.add_widget(
             s:=ToggleButton(text='10 AW', 
             size_hint=( .5,.1),group='aw', 
@@ -195,7 +217,7 @@ class Tabs(TabbedPanel):
         content=self.ids.startansicht
         content.clear_widgets()
         content.add_widget(
-            Label(text='Möchtes du das Auto wirklich löschen? ', 
+            Label(text='Möchtest du das Auto wirklich löschen? ', 
             size_hint=( 1,.1)))  
         content.add_widget(
             Button(text='Ja',
