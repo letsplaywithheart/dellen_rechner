@@ -28,7 +28,7 @@ Builder.load_string("""
     TabbedPanelItem:
         text: 'Autos'
         size_hint: (0.1, 0.1)
-        on_state: if self.state=='down' : root.listenansicht()
+        on_state: if self.state=='down' : root.startansicht()
         StackLayout:
             id:startansicht 
             size_hint:(1,1)
@@ -43,7 +43,7 @@ Builder.load_string("""
     TabbedPanelItem:
         id: tabelle
         text: 'Arbeitsaufwand'
-        on_state: if self.state=='down' : root.tabelle()
+        on_state: if self.state=='down' : root.aw_tabelle()
         StackLayout:
             size_hint:(1,1)
 
@@ -59,8 +59,8 @@ Builder.load_string("""
         y: self.parent.y + self.parent.size[1]/2 - self.size[1]/2
         x: self.parent.x + self.parent.size[0]/2 - self.size[0]/2
 """)
-def set_aw10(y, x):
-    y.aw10 = x
+# def set_aw10(auto,y, x):
+#     auto.aw10 = True if x == 'down' else False
 def set_anzahl( delle,intinput,x):
     if x == '':
         delle.anzahl =0
@@ -90,9 +90,11 @@ class delle():
 @dataclass
 class Teil():
     name: str ='name'
-    alu:bool=True
+    alu:bool=False
     kleben:bool=False 
     dellen:list = list[delle]
+    senkrecht:bool = False
+    aw10:bool = False
     def __post_init__(self):
         self.dellen=[
             delle('10mm',0),
@@ -117,13 +119,13 @@ class Auto(ToggleButton):
         super(Auto,self). __init__(**kwargs)
         self.allow_no_selection=False
         self.teile=[
-            Teil('Motorhaube'), 
-            Teil('Dach'),
-            Teil('Tür vorne links'), 
-            Teil('Tür vorne rechts'),
-            Teil('Tür hinten links'),
-            Teil('Tür hinten rechts'), 
-            Teil('Kofferraum'),
+            Teil('Motorhaube'       ), 
+            Teil('Dach'             ),
+            Teil('Tür vorne links'  , senkrecht = True), 
+            Teil('Tür vorne rechts' , senkrecht = True),
+            Teil('Tür hinten links' , senkrecht = True),
+            Teil('Tür hinten rechts', senkrecht = True), 
+            Teil('Kofferraum'       ),
             ] 
         self.group='auto'
         self.size_hint = 1,.05
@@ -133,6 +135,9 @@ class Auto(ToggleButton):
         content.auto = self
     def set_name(self,textinput, value):
         self.text= value
+    def set_aw10(self,button, value):
+        for teil in self.teile:
+            teil.aw10 = not teil.aw10
     
 class EditButton(Button):
     pass
@@ -156,8 +161,7 @@ class Tabs(TabbedPanel):
         super(Tabs, self).__init__(**kwargs)
         self.auto= self.auto_liste[0]
         self.auto.state='down'
-        
-    def listenansicht(self, *args):
+    def startansicht(self, *args):
         content=self.ids.startansicht
         content.clear_widgets()
         content.add_widget(
@@ -189,10 +193,12 @@ class Tabs(TabbedPanel):
         content.add_widget(
             s:=ToggleButton(text='10 AW', 
             size_hint=( .5,.1),group='aw', 
-            state='down')) 
+            state='down' if auto.aw10 else 'normal'))
+        s.bind(state=self.auto.set_aw10)
         content.add_widget(
             ToggleButton(text='12 AW', 
-            size_hint=( .5,.1),group='aw'))  
+            size_hint=( .5,.1),group='aw', 
+            state='down' if not auto.aw10 else 'normal'))  
         content.add_widget(
             b:=Button(text='Fertig',
             size_hint=(.5,.1), 
@@ -202,16 +208,16 @@ class Tabs(TabbedPanel):
             b:=Button(text='Abbrechen',
             size_hint=(.5,.1), 
             background_color=( 1,0, 0)))
-        b.bind(on_press= self.listenansicht)
+        b.bind(on_press= self.startansicht)
     def add_Auto(self, auto ,Button):
         if auto in self.auto_liste:
-            self.listenansicht()
+            self.startansicht()
         else:
             self.auto.state= 'normal'
             self.auto = auto
             self.auto_liste.append(auto)
             auto.state='down'
-            self.listenansicht()
+            self.startansicht()
     def delete(self, button):
         content=self.ids.startansicht
         content.clear_widgets()
@@ -227,15 +233,15 @@ class Tabs(TabbedPanel):
             b:=Button(text='Nein',
             size_hint=(.5,.1), 
             background_color=(1, 0,0))) 
-        b.bind(on_press= self.listenansicht)
+        b.bind(on_press= self.startansicht)
     def delete_auto(self,button):
         self.auto_liste.remove(self.auto)
         if len(self.auto_liste)<=0:
             self.auto_liste.append(Auto(name='Beispielauto'))
         self.auto = self.auto_liste[0]
         self.auto.state='down'
-        self.listenansicht()
-    def calc(self, teil, x):
+        self.startansicht()
+    def dellen_aufnehmen(self, teil, x):
         content=self.ids.schadensaufnahme.content
         content.clear_widgets()
         content.add_widget(
@@ -269,7 +275,6 @@ class Tabs(TabbedPanel):
             size_hint=(1, .1),
             background_color= 
             (0.0, 1.0, 0.0, 1.0))) 
-
     def schadensaufnahme(self, *args):
         content=self.ids.schadensaufnahme.content
         content.clear_widgets()
@@ -280,10 +285,10 @@ class Tabs(TabbedPanel):
             bt =  Button(
                 text=teil.name, size_hint=(1,.1) ) 
             bt.bind(
-                on_press=partial(self.calc, teil))
+                on_press=partial(self.dellen_aufnehmen, teil))
             content.add_widget(bt) 
 
-    def tabelle(self):
+    def aw_tabelle(self):
         content=self.ids.tabelle.content
         content.clear_widgets()
         content.add_widget(
@@ -297,10 +302,14 @@ class Tabs(TabbedPanel):
             size_hint=(.5,.1)))
         for teil in self.auto.teile:
             s = sum(x.anzahl for x in teil.dellen)
-            a = sum(int((1+x) * teil.dellen[x].anzahl) for x in range(8)) 
-            aw = aw12s[round(a/s/10+0.5)](a) if s >0 else 0
-            if aw ==0:
+            if s ==0:
                 continue
+            a = sum(int((1+x) * teil.dellen[x].anzahl) for x in range(8)) 
+            if teil.aw10:
+                y = aw10s if teil.senkrecht else aw10w
+            else:
+                y = aw12s if teil.senkrecht else aw12w
+            aw = y[round(a/s/10+0.5)](a) if s >0 else 0
             content.add_widget(
                 Button(text=teil.name,
                     size_hint=(.5,.1)))
