@@ -15,6 +15,7 @@ from kivy.clock import Clock
 from bvat import aw10s,aw10w,aw12s,aw12w
 
 Builder.load_string("""
+#: import Window kivy.core.window.Window
 
 <Test>:
     id:testview
@@ -35,10 +36,17 @@ Builder.load_string("""
             orientation:'lr-tb'
                 
     TabbedPanelItem:
-        id: schadensaufnahme
+        #id: schadensaufnahme
         text: 'Karosserieteile'
         on_state: if self.state=='down' : root.schadensaufnahme()
-        Karosserie:
+        ScrollView:
+            do_scroll_x: False
+            do_scroll_y: True
+            size_hint: 1,1 
+            StackLayout:
+                id: schadensaufnahme
+                size_hint: 1,None
+                height: sum(x.height for x in self.children)
             
     TabbedPanelItem:
         id: tabelle
@@ -46,9 +54,6 @@ Builder.load_string("""
         on_state: if self.state=='down' : root.aw_tabelle()
         StackLayout:
             size_hint:(1,1)
-
-<Karosserie>
-    orientation:'lr-tb'
 
 <EditButton>
     size_hint: (1/3, None)
@@ -59,8 +64,7 @@ Builder.load_string("""
         y: self.parent.y + self.parent.size[1]/2 - self.size[1]/2
         x: self.parent.x + self.parent.size[0]/2 - self.size[0]/2
 """)
-# def set_aw10(auto,y, x):
-#     auto.aw10 = True if x == 'down' else False
+
 def set_anzahl( delle,intinput,x):
     if x == '':
         delle.anzahl =0
@@ -121,10 +125,16 @@ class Auto(ToggleButton):
         self.teile=[
             Teil('Motorhaube'       ), 
             Teil('Dach'             ),
+            Teil('A Säule links'       ),
+            Teil('A Säule rechts'       ),
             Teil('Tür vorne links'  , senkrecht = True), 
             Teil('Tür vorne rechts' , senkrecht = True),
             Teil('Tür hinten links' , senkrecht = True),
             Teil('Tür hinten rechts', senkrecht = True), 
+            Teil('Kotflügel vorne links'  , senkrecht = True), 
+            Teil('Kotflügel vorne rechts' , senkrecht = True),
+            Teil('Kotflügel hinten links' , senkrecht = True),
+            Teil('Kotflügel hinten rechts', senkrecht = True), 
             Teil('Kofferraum'       ),
             ] 
         self.group='auto'
@@ -141,8 +151,7 @@ class Auto(ToggleButton):
     
 class EditButton(Button):
     pass
-class Karosserie(StackLayout):
-    pass
+
 class Schaden(StackLayout):
     def __init__(self, **kwargs):
         self.teil=kwargs['teil']
@@ -242,7 +251,7 @@ class Tabs(TabbedPanel):
         self.auto.state='down'
         self.startansicht()
     def dellen_aufnehmen(self, teil, x):
-        content=self.ids.schadensaufnahme.content
+        content=self.ids.schadensaufnahme
         content.clear_widgets()
         content.add_widget(
             Button(text=teil.name,
@@ -276,11 +285,12 @@ class Tabs(TabbedPanel):
             background_color= 
             (0.0, 1.0, 0.0, 1.0))) 
     def schadensaufnahme(self, *args):
-        content=self.ids.schadensaufnahme.content
+        content=self.ids.schadensaufnahme
         content.clear_widgets()
         content.add_widget(
-            Button(text='Schäden',
-            size_hint=(1,.2)))
+            Button(text=self.auto.text,
+            size_hint=(1,.1), 
+            background_color=(0,.6,0)))
         for teil in self.auto.teile:
             bt =  Button(
                 text=teil.name, size_hint=(1,.1) ) 
@@ -293,7 +303,8 @@ class Tabs(TabbedPanel):
         content.clear_widgets()
         content.add_widget(
             Button(text=self.auto.text,
-            size_hint=(1,.2)))
+            size_hint=(1,.1), 
+            background_color=(0,.6,0) ))
         content.add_widget(
             Label(text='Teil',
             size_hint=(.5,.1)))
@@ -310,6 +321,10 @@ class Tabs(TabbedPanel):
             else:
                 y = aw12s if teil.senkrecht else aw12w
             aw = y[round(a/s/10+0.5)](a) if s >0 else 0
+            if teil.alu:
+                aw= aw * 1.25
+            if teil.kleben:
+                aw= aw * 1.3
             content.add_widget(
                 Button(text=teil.name,
                     size_hint=(.5,.1)))
