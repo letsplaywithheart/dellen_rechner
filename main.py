@@ -13,12 +13,9 @@ from dataclasses import dataclass
 from functools import partial
 from kivy.clock import Clock
 from bvat import aw10s,aw10w,aw12s,aw12w
+from kivy.core.window import Window
 
 Builder.load_string("""
-#: import Window kivy.core.window.Window
-
-<Test>:
-    id:testview
 
 <Tabs>
     id:tabs
@@ -36,17 +33,22 @@ Builder.load_string("""
             orientation:'lr-tb'
                 
     TabbedPanelItem:
-        #id: schadensaufnahme
         text: 'Karosserieteile'
         on_state: if self.state=='down' : root.schadensaufnahme()
-        ScrollView:
-            do_scroll_x: False
-            do_scroll_y: True
-            size_hint: 1,1 
-            StackLayout:
-                id: schadensaufnahme
-                size_hint: 1,None
-                height: sum(x.height for x in self.children)
+        BoxLayout:
+            orientation: 'vertical' 
+            Button:
+                id: uberschrift
+                size_hint: (1,.1)
+                background_color: (.0,.6,.0)
+            ScrollView:
+                do_scroll_x: False
+                do_scroll_y: True
+                size_hint: (1,1)
+                StackLayout:
+                    id: schadensaufnahme
+                    size_hint: 1,None
+                    height: sum(x.height for x in self.children)
             
     TabbedPanelItem:
         id: tabelle
@@ -287,13 +289,14 @@ class Tabs(TabbedPanel):
     def schadensaufnahme(self, *args):
         content=self.ids.schadensaufnahme
         content.clear_widgets()
-        content.add_widget(
-            Button(text=self.auto.text,
-            size_hint=(1,.1), 
-            background_color=(0,.6,0)))
+        self.ids.uberschrift.text=self.auto.text
+        #content.add_widget(
+         #   Button(text=self.auto.text,
+#            size_hint=(1,None), 
+#            background_color=(0,.6,0)))
         for teil in self.auto.teile:
             bt =  Button(
-                text=teil.name, size_hint=(1,.1) ) 
+                text=teil.name, size_hint=(1,None), size=(0,Window.size[1]*0.1)) 
             bt.bind(
                 on_press=partial(self.dellen_aufnehmen, teil))
             content.add_widget(bt) 
