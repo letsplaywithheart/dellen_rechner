@@ -1,3 +1,4 @@
+import pickle 
 from kivy.app import App
 from kivy.uix.tabbedpanel import TabbedPanel
 from kivy.uix.boxlayout import BoxLayout
@@ -117,12 +118,12 @@ class Teil():
     def set_alu(self, x, y):
         self.alu = not self.alu
     
-class Auto(ToggleButton):
+class Auto():
     def __init__(self, aw10= True, **kwargs):
+        self.text = 'Auto'
         if 'name' in kwargs:
             self.text = kwargs['name']
             kwargs.pop('name')
-        super(Auto,self). __init__(**kwargs)
         self.allow_no_selection=False
         self.teile=[
             Teil('Motorhaube'       ), 
@@ -142,9 +143,7 @@ class Auto(ToggleButton):
         self.group='auto'
         self.size_hint = 1,.05
         self.aw10= aw10
-    def on_press(self):
-        content = self.parent.parent.parent
-        content.auto = self
+        self.state= 'normal'
     def set_name(self,textinput, value):
         self.text= value
     def set_aw10(self,button, value):
@@ -170,8 +169,24 @@ class Tabs(TabbedPanel):
                     ]
     def __init__(self, **kwargs):
         super(Tabs, self).__init__(**kwargs)
+        with open('auto_liste', 'ab+') as file:
+            file.seek(0)
+            temp = file.read()
+            if len(temp)>0:
+                file.seek(0)
+                self.auto_liste=pickle.load(file)
+        for auto in self.auto_liste:
+            auto.state='normal'
         self.auto= self.auto_liste[0]
         self.auto.state='down'
+    def save(self):
+        with open('auto_liste', 'wb') as file:
+            pickle.dump(self.auto_liste,file)
+            pass
+    def set_auto(self, button, value):
+        self.auto.state = 'normal'
+        self.auto=button.auto
+        self.auto.state = 'down'
     def startansicht(self, *args):
         content=self.ids.startansicht
         content.clear_widgets()
@@ -189,7 +204,16 @@ class Tabs(TabbedPanel):
             b:=EditButton(size_hint=(1/3,.1)))
         b.bind(on_press= partial(self.edit,new = False))
         for auto in self.auto_liste:
-            content.add_widget(auto)
+            content.add_widget(
+                b:=ToggleButton(text=auto.text, 
+                size_hint = (1,.05 ), 
+                group='auto', 
+                allow_no_selection=False, 
+                state= auto.state
+                ))
+            b.auto= auto
+            b.bind(state=self.set_auto)
+        self.save()
     def edit(self, button ,new=True):
         auto=Auto() if new else self.auto
         content=self.ids.startansicht
@@ -226,7 +250,7 @@ class Tabs(TabbedPanel):
         else:
             self.auto.state= 'normal'
             self.auto = auto
-            self.auto_liste.append(auto)
+            self.auto_liste.insert(0,auto)
             auto.state='down'
             self.startansicht()
     def delete(self, button):
@@ -287,6 +311,7 @@ class Tabs(TabbedPanel):
             background_color= 
             (0.0, 1.0, 0.0, 1.0))) 
     def schadensaufnahme(self, *args):
+        self.save()
         content=self.ids.schadensaufnahme
         content.clear_widgets()
         self.ids.uberschrift.text=self.auto.text
@@ -302,6 +327,7 @@ class Tabs(TabbedPanel):
             content.add_widget(bt) 
 
     def aw_tabelle(self):
+        self.save()
         content=self.ids.tabelle.content
         content.clear_widgets()
         content.add_widget(
