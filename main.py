@@ -34,7 +34,7 @@ Builder.load_string("""
             orientation:'lr-tb'
                 
     TabbedPanelItem:
-        text: 'Karosserieteile'
+        text: 'Hagel'
         on_state: if self.state=='down' : root.schadensaufnahme()
         BoxLayout:
             orientation: 'vertical' 
@@ -60,7 +60,7 @@ Builder.load_string("""
 
 <EditButton>
     size_hint: (1/3, None)
-    # on_press: root.parent.edit(auto=root.auto)
+    # on_press: root.parent.edit_auto(auto=root.auto)
     Image:
         source: 'pen.png'
         size: self.parent.height*0.7,self.parent.height*0.7
@@ -153,13 +153,6 @@ class Auto():
 class EditButton(Button):
     pass
 
-class Schaden(StackLayout):
-    def __init__(self, **kwargs):
-        self.teil=kwargs['teil']
-        kwargs.pop('teil')
-        super(Schaden, self).__init__(
-                **kwargs)
-
 class Tabs(TabbedPanel):
     auto=Auto() 
     auto_liste=[
@@ -182,7 +175,6 @@ class Tabs(TabbedPanel):
     def save(self):
         with open('auto_liste', 'wb') as file:
             pickle.dump(self.auto_liste,file)
-            pass
     def set_auto(self, button, value):
         self.auto.state = 'normal'
         self.auto=button.auto
@@ -194,15 +186,15 @@ class Tabs(TabbedPanel):
             b:=Button(text='+',
             size_hint=(1/3,.1), 
             background_color=( 0,1, 0)))
-        b.bind(on_press= self.edit)
+        b.bind(on_press= self.edit_auto)
         content.add_widget(
             b:=Button(text='-',
             size_hint=(1/3,.1), 
             background_color=( 1,0, 0)))
-        b.bind(on_press= self.delete)
+        b.bind(on_press= self.delete_abfrage)
         content.add_widget(
             b:=EditButton(size_hint=(1/3,.1)))
-        b.bind(on_press= partial(self.edit,new = False))
+        b.bind(on_press= partial(self.edit_auto,new = False))
         for auto in self.auto_liste:
             content.add_widget(
                 b:=ToggleButton(text=auto.text, 
@@ -214,7 +206,7 @@ class Tabs(TabbedPanel):
             b.auto= auto
             b.bind(state=self.set_auto)
         self.save()
-    def edit(self, button ,new=True):
+    def edit_auto(self, button ,new=True):
         auto=Auto() if new else self.auto
         content=self.ids.startansicht
         content.clear_widgets() 
@@ -253,7 +245,7 @@ class Tabs(TabbedPanel):
             self.auto_liste.insert(0,auto)
             auto.state='down'
             self.startansicht()
-    def delete(self, button):
+    def delete_abfrage(self, button):
         content=self.ids.startansicht
         content.clear_widgets()
         content.add_widget(
@@ -315,10 +307,6 @@ class Tabs(TabbedPanel):
         content=self.ids.schadensaufnahme
         content.clear_widgets()
         self.ids.uberschrift.text=self.auto.text
-        #content.add_widget(
-         #   Button(text=self.auto.text,
-#            size_hint=(1,None), 
-#            background_color=(0,.6,0)))
         for teil in self.auto.teile:
             bt =  Button(
                 text=teil.name, size_hint=(1,None), size=(0,Window.size[1]*0.1)) 
