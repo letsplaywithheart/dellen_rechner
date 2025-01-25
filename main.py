@@ -3,6 +3,7 @@ from kivy.app import App
 from kivy.uix.tabbedpanel import TabbedPanel
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.stacklayout import StackLayout
+from kivy.uix.scrollview import ScrollView
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.textinput import TextInput 
@@ -35,21 +36,11 @@ Builder.load_string("""
                 
     TabbedPanelItem:
         text: 'Hagel'
+        # id: hagel
         on_state: if self.state=='down' : root.schadensaufnahme()
-        BoxLayout:
-            orientation: 'vertical' 
-            Button:
-                id: uberschrift
-                size_hint: (1,.1)
-                background_color: (.0,.6,.0)
-            ScrollView:
-                do_scroll_x: False
-                do_scroll_y: True
-                size_hint: (1,1)
-                StackLayout:
-                    id: schadensaufnahme
-                    size_hint: 1,None
-                    height: sum(x.height for x in self.children)
+        StackLayout:
+            id:hagel
+            orientation: 'lr-tb'
             
     TabbedPanelItem:
         id: tabelle
@@ -68,37 +59,30 @@ Builder.load_string("""
         x: self.parent.x + self.parent.size[0]/2 - self.size[0]/2
 """)
 
-def set_anzahl( delle,intinput,x):
-    if x == '':
-        delle.anzahl =0
-    else:
-        delle.anzahl=int(x)
-        
-class IntInput(TextInput):
-    pat = re.compile('[^0-9]')
-    def insert_text(self, substring,
-        from_undo=False):
-        pat = self.pat
-        s = re.sub(pat, '', substring)
-        return super().insert_text(
-            s, from_undo=from_undo)
-    def on_focus(
-        self, instance, value, *largs):
-        if value:
-            Clock.schedule_once(
-                lambda dt: instance.select_all(),
-                    0.1)
-        
 @dataclass
 class delle():
     name: str
     anzahl: int 
+    def set_anzahl(self,initinput,x):
+        if x == '':
+            self.anzahl =0
+        else:
+            self.anzahl=int(x)
+    def incr_anzahl(self,Ii,bt):
+        self.anzahl=self.anzahl+1
+        Ii.text = str(self.anzahl)
+    def decr_anzahl(self,Ii,bt):
+        if self.anzahl>0:
+            self.anzahl=self.anzahl-1
+            Ii.text = str(self.anzahl)
 
 @dataclass
 class Teil():
     name: str ='name'
     alu:bool=False
     kleben:bool=False 
+    press:bool=False 
+    tauschen:bool=False 
     dellen:list = list[delle]
     senkrecht:bool = False
     aw10:bool = False
@@ -117,6 +101,10 @@ class Teil():
         self.kleben = not self.kleben
     def set_alu(self, x, y):
         self.alu = not self.alu
+    def set_tauschen(self, x, y):
+        self.tauschen = not self.tauschen
+    def set_press(self, x, y):
+        self.press = not self.press
     
 class Auto():
     def __init__(self, aw10= True, **kwargs):
@@ -140,8 +128,6 @@ class Auto():
             Teil('Kotflügel hinten rechts', senkrecht = True), 
             Teil('Kofferraum'       ),
             ] 
-        self.group='auto'
-        self.size_hint = 1,.05
         self.aw10= aw10
         self.state= 'normal'
     def set_name(self,textinput, value):
@@ -153,6 +139,26 @@ class Auto():
 class EditButton(Button):
     pass
 
+class IntInput(TextInput):
+    pat = re.compile('[^0-9]')
+    def __init__(self, **kwargs):
+        super(IntInput, self).__init__(**kwargs)
+        self.font_size = self.size[1] *0.6
+        self.halign= "center"
+        self.align= "center"
+    def insert_text(self, substring,
+        from_undo=False):
+        pat = self.pat
+        s = re.sub(pat, '', substring)
+        return super().insert_text(
+            s, from_undo=from_undo)
+    def on_focus(
+        self, instance, value, *largs):
+        if value:
+            Clock.schedule_once(
+                lambda dt: instance.select_all(),
+                    0.1)
+        
 class Tabs(TabbedPanel):
     auto=Auto() 
     auto_liste=[
@@ -188,7 +194,7 @@ class Tabs(TabbedPanel):
         content=self.ids.startansicht
         content.clear_widgets() 
         content.add_widget(
-            Button(text='Name', 
+            Button(text='Name/Karosserienummer', 
             size_hint=( .5,.1))) 
         content.add_widget(
             t:=TextInput(size_hint=(.5,.1),
@@ -250,33 +256,62 @@ class Tabs(TabbedPanel):
         self.startansicht()
 
     def dellen_aufnehmen(self, teil, x):
-        content=self.ids.schadensaufnahme
+        content=self.ids.hagel
         content.clear_widgets()
+        height = 0.08
+        content.add_widget(Button(text=self.auto.text, 
+                        size_hint= (1,.1),
+                        background_color= (.0,.6,.0)))
         content.add_widget(
             Button(text=teil.name,
-            size_hint=(1,.05))) 
+            size_hint=(1,height))) 
         content.add_widget(
             b:=ToggleButton(text='Alu', 
-            size_hint=(.5,.05), 
+            size_hint=(.25,height), 
             state="down" if 
                 teil.alu else "normal")) 
         b.bind(state=teil.set_alu)
         content.add_widget(
             b:=ToggleButton(
-                text='Kleben', size_hint=(.5,.05), 
+                text='Kleben', 
+                size_hint=(.25,height), 
                 state='down' if 
                     teil.kleben else 'normal')) 
         b.bind(state=teil.set_kleben)
+        content.add_widget(
+            b:=ToggleButton(
+                text='Drücken', 
+                size_hint=(.25,height), 
+                state='down' if 
+                    teil.press else 'normal')) 
+        b.bind(state=teil.set_press)
+        content.add_widget(
+            b:=ToggleButton(
+                text='Tauschen', 
+                size_hint=(.25,height), 
+                state='down' if 
+                    teil.tauschen else 'normal')) 
+        b.bind(state=teil.set_tauschen)
         for delle in teil.dellen:
             content.add_widget(
-                Button(
+                bt:=Button(
                     text=delle.name,
-                    size_hint=(.5, .05))) 
+                    size_hint=(.3, height))) 
             Ii =IntInput(
-                text=str(delle.anzahl) ,
-                size_hint=(.5, .05))
-            Ii.bind(text=partial(set_anzahl, delle))
+                text=str(delle.anzahl),
+                size_hint=(.3, height))
+            Ii.bind(text= delle.set_anzahl)
+            content.add_widget(
+                bt:=Button(
+                    text='-',
+                    size_hint=(.2, height)))
+            bt.bind(on_press=partial(delle.decr_anzahl,Ii))
             content.add_widget(Ii)
+            content.add_widget(
+                bt:=Button(
+                    text='+',
+                    size_hint=(.2, height))) 
+            bt.bind(on_press=partial(delle.incr_anzahl,Ii))
         content.add_widget(
             Button(text='Fertig', 
             on_press=self.schadensaufnahme,
@@ -285,6 +320,7 @@ class Tabs(TabbedPanel):
             (0.0, 1.0, 0.0, 1.0))) 
         
     def startansicht(self, *args):
+        self.save()
         content=self.ids.startansicht
         content.clear_widgets()
         content.add_widget(
@@ -310,19 +346,42 @@ class Tabs(TabbedPanel):
                 ))
             b.auto= auto
             b.bind(state=self.set_auto)
-        self.save()
 
     def schadensaufnahme(self, *args):
-        self.save()
-        content=self.ids.schadensaufnahme
+        # self.save()
+        content=self.ids.hagel
         content.clear_widgets()
-        self.ids.uberschrift.text=self.auto.text
+        content.add_widget(Button(text=self.auto.text, 
+                        size_hint= (1,.1),
+                        background_color= (.0,.6,.0)))
+        content.add_widget(scv:=ScrollView(do_scroll_x=False,size_hint= (1,.8) ))
+        scv.add_widget(stl:=StackLayout(size_hint=(1,None)))
+            
         for teil in self.auto.teile:
-            bt =  Button(
-                text=teil.name, size_hint=(1,None), size=(0,Window.size[1]*0.1)) 
+            s = sum(x.anzahl for x in teil.dellen)
+            a = sum(int((1+x) * teil.dellen[x].anzahl) for x in range(8)) 
+            if teil.aw10:
+                y = aw10s if teil.senkrecht else aw10w
+            else:
+                y = aw12s if teil.senkrecht else aw12w
+            aw = y[round(a/s/10+0.5)](a) if s >0 else 0
+            if teil.alu:
+                aw= aw * 1.25
+            if teil.kleben:
+                aw= aw * 1.3
+            stl.add_widget(
+                bt:=Button(text=teil.name,
+                    size_hint=(.5,None),
+                    size=(0,Window.size[1]*0.1)))
             bt.bind(
                 on_press=partial(self.dellen_aufnehmen, teil))
-            content.add_widget(bt) 
+            stl.add_widget(
+                bt:=Button(text=str(aw) , 
+                size_hint=(.5,None),
+                size=(0,Window.size[1]*0.1)))
+            bt.bind(
+                on_press=partial(self.dellen_aufnehmen, teil))
+        stl.height= sum(x.height for x in self.children)+500
 
     def aw_tabelle(self):
         self.save()
