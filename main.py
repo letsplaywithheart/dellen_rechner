@@ -1,6 +1,7 @@
 import pickle
 from kivy.app import App
 from kivy.metrics import dp
+from kivy.graphics import Color
 from kivy.uix.tabbedpanel import TabbedPanel
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.stacklayout import StackLayout
@@ -368,33 +369,42 @@ class Tabs(TabbedPanel):
         content.add_widget(
             Button(
                 text=self.auto.text,
-                size_hint=(1, 0.1),
+                size_hint=(.7,0.1),
                 background_color=(0.0, 0.6, 0.0),
             )
         )
         content.add_widget(
+            bt_sum:=Button(
+                text=self.auto.text,
+                size_hint=(.3,0.1),
+                background_color=(1.0, 0, 0.0),
+            )
+        )
+        bt_sum.canvas.add(Color(rgba=(1, 0,0)))
+        content.add_widget(
             bt_name := Label(
                 text='Teil',
                 size_hint=(0.5, None),
-                size=(0, Window.size[1] * 0.1),
+                size=(0, Window.size[1] * 0.05),
             )
         )
         content.add_widget(
-            bt_name := Label(
+            bt_aw := Label(
                 text='AW',
                 size_hint=(0.5, None),
-                size=(0, Window.size[1] * 0.1),
+                size=(0, Window.size[1] * 0.05),
             )
         )
         content.add_widget(
             scv := ScrollView(
                 do_scroll_x=False,
                 size_hint=(1, None),
-                size=(0, Window.size[1] * 0.9 - 40),
+                size=(0, Window.size[1] * 0.9 - dp(40)) ,
             )
         )
         scv.add_widget(stl := StackLayout(size_hint=(1, None)))
-        stl.height = sum(x.height for x in stl.children)
+        summe=0
+        finish = 13 if self.auto.aw10 else 15.5
         for teil in self.auto.teile:
             s = sum(x.anzahl for x in teil.dellen)
             a = sum(int((1 + x) * teil.dellen[x].anzahl) for x in range(8))
@@ -407,6 +417,26 @@ class Tabs(TabbedPanel):
                 aw = aw * 1.25
             if teil.kleben:
                 aw = aw * 1.3
+            if teil.press:
+                aw = aw * 0.6
+            if aw >0:
+                aw = aw + 6
+                if teil.aw10:
+                    aw +=6
+                    if finish >2.5:
+                        aw+=2.5
+                        finish-=2.5
+                    elif finish>0:
+                        aw+=finish
+                        finish =0
+                else:
+                    aw +=7
+                    if finish >3:
+                        aw+=3
+                        finish-=3
+                    elif finish>0:
+                        aw+=finish
+                        finish =0
             stl.add_widget(
                 bt_name := Button(
                     text=teil.name,
@@ -421,12 +451,15 @@ class Tabs(TabbedPanel):
             if aw >0:
                 stl.add_widget(
                     bt_aw := Button(
-                        text=str(aw), size_hint=(0.5, None), size=(0, Window.size[1] * 0.1)
+                        text=str(aw), size_hint=(0.4, None), size=(0, Window.size[1] * 0.1)
                     )
                 )
                 bt_aw.bind(on_press=partial(self.dellen_aufnehmen, teil))
-                bt_name.size_hint_x = .5
+                
+                summe += aw
+            bt_name.size_hint_x = .6
         # print(Window.size)
+        bt_sum.text=str(summe)
 
     def aw_tabelle(self):
         self.save()

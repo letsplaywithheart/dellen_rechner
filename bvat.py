@@ -18,9 +18,9 @@ class Interpolate:
         if x == self.x_list[-1]:
             return self.y_list[-1]
         if x > self.x_list[-1]:
-            return round(self.y_list[-1] + self.slopes[-1] *(x-self.x_list[-1] )) 
+            return self.y_list[-1] + self.slopes[-1] *(x-self.x_list[-1] )
         i = bisect_right(self.x_list, x) - 1
-        return round(self.y_list[i] + self.slopes[i] * (x - self.x_list[i]) )
+        return self.y_list[i] + self.slopes[i] * (x - self.x_list[i]) 
         
 #10senkrecht
 x = [0,1,2,3,4,5,6,7,8,9,10,13,16,19,22,25,28,31,34,37,40,45,50,55,60,65,70,75,80,85,90,95,100,110,120,130,140,150,160,170,180,190,200,210,220,230,240,250,260,270,280,300,325,350,375,400,425,450,475,500,525,550,575,600,650]
