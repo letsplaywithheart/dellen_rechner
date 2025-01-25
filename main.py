@@ -45,12 +45,12 @@ Builder.load_string(
             orientation: 'lr-tb'
             size_hint:(1,1)
             
-    TabbedPanelItem:
-        id: tabelle
-        text: 'Arbeitsaufwand'
-        on_state: if self.state=='down' : root.aw_tabelle()
-        StackLayout:
-            size_hint:(1,1)
+#    TabbedPanelItem:
+#        id: tabelle
+#        text: 'Foto'
+#        on_state: if self.state=='down' : root.aw_tabelle()
+#        StackLayout:
+#            size_hint:(1,1)
 
 <EditButton>
     size_hint: (1/3, None)
@@ -281,7 +281,7 @@ class Tabs(TabbedPanel):
             Button(
                 text=self.auto.text,
                 size_hint=(1, 0.1),
-                background_color=(0.0, 0.6, 0.0),
+                background_color=(0.0, 1, 0.0),
             )
         )
         content.add_widget(Button(text=teil.name, size_hint=(1, height)))
@@ -384,17 +384,39 @@ class Tabs(TabbedPanel):
         content.add_widget(
             bt_name := Label(
                 text='Teil',
-                size_hint=(0.5, None),
+                size_hint=(0.45, None),
+                size=(0, Window.size[1] * 0.05),
+            )
+        )
+        content.add_widget(
+            bt_aw := Label(
+                text='Gr',
+                size_hint=(0.1, None),
+                size=(0, Window.size[1] * 0.05),
+            )
+        )
+        content.add_widget(
+            bt_aw := Label(
+                text='Anzahl',
+                size_hint=(0.1, None),
+                size=(0, Window.size[1] * 0.05),
+            )
+        )
+        content.add_widget(
+            bt_aw := Label(
+                text='Extra',
+                size_hint=(0.2, None),
                 size=(0, Window.size[1] * 0.05),
             )
         )
         content.add_widget(
             bt_aw := Label(
                 text='AW',
-                size_hint=(0.5, None),
+                size_hint=(0.15, None),
                 size=(0, Window.size[1] * 0.05),
             )
         )
+        
         content.add_widget(
             scv := ScrollView(
                 do_scroll_x=False,
@@ -406,8 +428,9 @@ class Tabs(TabbedPanel):
         summe=0
         finish = 13 if self.auto.aw10 else 15.5
         for teil in self.auto.teile:
+            extra = BoxLayout(orientation='vertical', size_hint=(.2, None), size=(0, Window.size[1] * 0.1 )) 
             s = sum(x.anzahl for x in teil.dellen)
-            a = sum(int((1 + x) * teil.dellen[x].anzahl) for x in range(8))
+            a = sum(int((1+ x) * teil.dellen[x].anzahl) for x in range(8))
             if teil.aw10:
                 y = aw10s if teil.senkrecht else aw10w
             else:
@@ -415,10 +438,13 @@ class Tabs(TabbedPanel):
             aw = y[round(a / s / 10 + 0.5)](a) if s > 0 else 0
             if teil.alu:
                 aw = aw * 1.25
+                extra.add_widget(Button(text='Alu'))
             if teil.kleben:
                 aw = aw * 1.3
+                extra.add_widget(Button(text='Kleben'))
             if teil.press:
                 aw = aw * 0.6
+                extra.add_widget(Button(text='Drücken'))
             if aw >0:
                 aw = aw + 6
                 if teil.aw10:
@@ -441,53 +467,44 @@ class Tabs(TabbedPanel):
                 bt_name := Button(
                     text=teil.name,
                     size_hint=(1, None),
-                    size=(0, Window.size[1] * 0.1),
-                    halign = "left"
+                    size=(0, Window.size[1] * 0.1)
                 )
             )
+            stl.add_widget(
+                Button(
+                    text=str(10*round(a / s  + 0.5) ) if s>0 else '0' ,
+                    size_hint=(.1, None),
+                    size=(0, Window.size[1] * 0.1)
+                )
+            )
+            stl.add_widget(
+                Button(
+                    text=str(s) ,
+                    size_hint=(.1, None),
+                    size=(0, Window.size[1] * 0.1)
+                )
+            )
+            stl.add_widget(extra)
             stl.height = stl.height + bt_name.height
             # bt_name.text_size=(Window.size[0]/2-dp(20),None)
             bt_name.bind(on_press=partial(self.dellen_aufnehmen, teil))
             if aw >0:
                 stl.add_widget(
                     bt_aw := Button(
-                        text=str(aw), size_hint=(0.4, None), size=(0, Window.size[1] * 0.1)
+                        text=str(round(aw, 1)) , size_hint=(0.15, None), size=(0, Window.size[1] * 0.1)
                     )
                 )
                 bt_aw.bind(on_press=partial(self.dellen_aufnehmen, teil))
                 
                 summe += aw
-            bt_name.size_hint_x = .6
+            bt_name.size_hint_x = .45
         # print(Window.size)
-        bt_sum.text=str(summe)
+        bt_sum.text=str(round(summe, 1)) 
 
     def aw_tabelle(self):
         self.save()
         content = self.ids.tabelle.content
         content.clear_widgets()
-        content.add_widget(
-            Button(
-                text=self.auto.text, size_hint=(1, 0.1), background_color=(0, 0.6, 0)
-            )
-        )
-        content.add_widget(Label(text="Teil", size_hint=(0.5, 0.1)))
-        content.add_widget(Label(text="AW", size_hint=(0.5, 0.1)))
-        for teil in self.auto.teile:
-            s = sum(x.anzahl for x in teil.dellen)
-            if s == 0:
-                continue
-            a = sum(int((1 + x) * teil.dellen[x].anzahl) for x in range(8))
-            if teil.aw10:
-                y = aw10s if teil.senkrecht else aw10w
-            else:
-                y = aw12s if teil.senkrecht else aw12w
-            aw = y[round(a / s / 10 + 0.5)](a) if s > 0 else 0
-            if teil.alu:
-                aw = aw * 1.25
-            if teil.kleben:
-                aw = aw * 1.3
-            content.add_widget(Button(text=teil.name, size_hint=(0.5, 0.1)))
-            content.add_widget(Button(text=str(aw), size_hint=(0.5, 0.1)))
 
 
 class Test(BoxLayout):
