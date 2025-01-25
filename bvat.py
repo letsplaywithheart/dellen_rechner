@@ -79,5 +79,5 @@ for y in waagerecht12:
     aw12w.append( Interpolate(x[:len(y)], y) )
 
 if __name__ == '__main__' :
-    print(aw12w[0](0)) 
+    print(aw10s[1](7)) 
     print(aw12w[7](686)) 

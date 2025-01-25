@@ -63,6 +63,7 @@ Builder.load_string(
 """
 )
 
+#Window.softinput_mode = "pan"
 
 @dataclass
 class delle:
@@ -141,7 +142,8 @@ class Auto:
             Teil("Kotflügel vorne rechts", senkrecht=True),
             Teil("Kotflügel hinten links", senkrecht=True),
             Teil("Kotflügel hinten rechts", senkrecht=True),
-            Teil("Kofferraum"),
+            Teil("Heckklappe oben"),
+            Teil("Heckklappe unten"),
         ]
         self.aw10 = aw10
         self.state = "normal"
@@ -349,6 +351,8 @@ class Tabs(TabbedPanel):
         b.bind(on_press=self.delete_abfrage)
         content.add_widget(b := EditButton(size_hint=(1 / 3, 0.1)))
         b.bind(on_press=partial(self.edit_auto, new=False))
+        content.add_widget(TextInput(
+            hint_text='Suche', size_hint=(1,.05)))
         for auto in self.auto_liste:
             content.add_widget(
                 b := ToggleButton(
@@ -435,7 +439,7 @@ class Tabs(TabbedPanel):
                 y = aw10s if teil.senkrecht else aw10w
             else:
                 y = aw12s if teil.senkrecht else aw12w
-            aw = y[round(a / s / 10 + 0.5)](a) if s > 0 else 0
+            aw = y[round(a / s /10+ 0.5)](a) if s > 0 else 0
             if teil.alu:
                 aw = aw * 1.25
                 extra.add_widget(Button(text='Alu'))
