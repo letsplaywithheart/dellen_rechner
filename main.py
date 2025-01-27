@@ -27,6 +27,7 @@ Builder.load_string(
     tab_pos:'bottom_mid'
     do_default_tab: False
     tab_width: root.width/3
+    tab_height: dp(40)
         
     TabbedPanelItem:
         text: 'Autos'
@@ -365,7 +366,7 @@ class Tabs(TabbedPanel):
         content.add_widget(ti:=TextInput(hint_text="Suche", size_hint=(1, 0.05)))
         ti.bind(text=self.list_renew)
         content.add_widget(
-            scv:= ScrollView(do_scroll_x=False, size_hint=(1, 1))
+            scv:= ScrollView(do_scroll_x=False, size_hint=(1, None), size=(0, Window.size[1]*0.85-dp(40)))
         )
         self.startansicht_bl=BoxLayout(orientation = 'vertical', size_hint=(1,None),size=(0,0))
         scv.add_widget(self.startansicht_bl)
@@ -379,7 +380,8 @@ class Tabs(TabbedPanel):
                 self.startansicht_bl.add_widget(
                     b := ToggleButton(
                         text=auto.text,
-                        size_hint=(1, 0.05),
+                        size_hint=(1, None),
+                        size=(0,dp(40)),
                         group="auto",
                         allow_no_selection=False,
                         state=auto.state,
