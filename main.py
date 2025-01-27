@@ -412,35 +412,35 @@ class Tabs(TabbedPanel):
             bt_name := Label(
                 text="Teil",
                 size_hint=(0.45, None),
-                size=(0, Window.size[1] * 0.05),
+                size=(0, dp(20)),
             )
         )
         content.add_widget(
             bt_aw := Label(
                 text="Gr",
                 size_hint=(0.1, None),
-                size=(0, Window.size[1] * 0.05),
+                size=(0, dp(20)),
             )
         )
         content.add_widget(
             bt_aw := Label(
                 text="Anzahl",
                 size_hint=(0.1, None),
-                size=(0, Window.size[1] * 0.05),
+                size=(0, dp(20)),
             )
         )
         content.add_widget(
             bt_aw := Label(
                 text="Extra",
                 size_hint=(0.2, None),
-                size=(0, Window.size[1] * 0.05),
+                size=(0, dp(20)),
             )
         )
         content.add_widget(
             bt_aw := Label(
                 text="AW",
                 size_hint=(0.15, None),
-                size=(0, Window.size[1] * 0.05),
+                size=(0, dp(20)),
             )
         )
 
@@ -459,7 +459,7 @@ class Tabs(TabbedPanel):
             extra = BoxLayout(
                 orientation="vertical",
                 size_hint=(0.2, None),
-                size=(0, Window.size[1] * 0.1),
+                size=(0, dp(40)),
             )
             s = sum(x.anzahl for x in teil.dellen)
             a = sum(int((1 + x) * teil.dellen[x].anzahl) for x in range(8))
@@ -484,20 +484,20 @@ class Tabs(TabbedPanel):
             # print(f"aw {aw}") if s > 0 else 0
             stl.add_widget(
                 bt_name := Button(
-                    text=teil.name, size_hint=(1, None), size=(0, Window.size[1] * 0.1)
+                    text=teil.name, size_hint=(1, None), size=(0, dp(40))
                 )
             )
             stl.add_widget(
                 bt := Button(
                     text=str(10 * round(a / s + 0.5)) if s > 0 else "0",
                     size_hint=(0.1, None),
-                    size=(0, Window.size[1] * 0.1),
+                    size=(0, dp(40)),
                 )
             )
             bt.bind(on_press=partial(self.dellen_aufnehmen, teil))
             stl.add_widget(
                 bt := Button(
-                    text=str(s), size_hint=(0.1, None), size=(0, Window.size[1] * 0.1)
+                    text=str(s), size_hint=(0.1, None), size=(0, dp(40))
                 )
             )
             bt.bind(on_press=partial(self.dellen_aufnehmen, teil))
@@ -509,7 +509,7 @@ class Tabs(TabbedPanel):
                     bt_aw := Button(
                         text=str(round(aw, 1)),
                         size_hint=(0.15, None),
-                        size=(0, Window.size[1] * 0.1),
+                        size=(0, dp(40)),
                     )
                 )
                 bt_aw.bind(on_press=partial(self.dellen_aufnehmen, teil))
@@ -523,13 +523,13 @@ class Tabs(TabbedPanel):
                 bt := Button(
                     text="Rüstzeit",
                     size_hint=(0.45, None),
-                    size=(0, Window.size[1] * 0.1),
+                    size=(0, dp(40)),
                 ),
                 index=len(stl.children),
             )
             stl.add_widget(
                 bt := Label(
-                    text="", size_hint=(0.4, None), size=(0, Window.size[1] * 0.1)
+                    text="", size_hint=(0.4, None), size=(0, dp(40))
                 ),
                 index=len(stl.children) - 1,
             )
@@ -537,7 +537,7 @@ class Tabs(TabbedPanel):
                 bt := Button(
                     text=str(6 if self.auto.aw10 else 7),
                     size_hint=(0.15, None),
-                    size=(0, Window.size[1] * 0.1),
+                    size=(0, dp(40)),
                 ),
                 index=len(stl.children) - 2,
             )
@@ -545,13 +545,13 @@ class Tabs(TabbedPanel):
                 bt := Button(
                     text="Finish",
                     size_hint=(0.45, None),
-                    size=(0, Window.size[1] * 0.1),
+                    size=(0, dp(40)),
                 ),
                 index=len(stl.children) - 3,
             )
             stl.add_widget(
                 bt := Label(
-                    text="", size_hint=(0.4, None), size=(0, Window.size[1] * 0.1)
+                    text="", size_hint=(0.4, None), size=(0, dp(40))
                 ),
                 index=len(stl.children) - 4,
             )
@@ -564,7 +564,7 @@ class Tabs(TabbedPanel):
                 bt := Button(
                     text=str(finish),
                     size_hint=(0.15, None),
-                    size=(0, Window.size[1] * 0.1),
+                    size=(0, dp(40)),
                 ),
                 index=len(stl.children) - 5,
             )
