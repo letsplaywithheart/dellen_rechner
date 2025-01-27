@@ -448,7 +448,7 @@ class Tabs(TabbedPanel):
             scv := ScrollView(
                 do_scroll_x=False,
                 size_hint=(1, None),
-                size=(0, Window.size[1] * 0.9 - dp(40)),
+                size=(0, Window.size[1] - dp(60)),
             )
         )
         scv.add_widget(stl := StackLayout(size_hint=(1, None)))
