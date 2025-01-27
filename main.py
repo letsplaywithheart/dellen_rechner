@@ -177,8 +177,7 @@ class IntInput(TextInput):
         return super().insert_text(s, from_undo=from_undo)
 
     def on_focus(self, instance, value, *largs):
-        if value:
-            Clock.schedule_once(lambda dt: instance.select_all(), 0.1)
+        Clock.schedule_once(lambda dt: instance.select_all(), 0.1)
 
 
 class Tabs(TabbedPanel):
@@ -211,17 +210,21 @@ class Tabs(TabbedPanel):
         auto = Auto() if new else self.auto
         content = self.ids.startansicht
         content.clear_widgets()
-        content.add_widget(Button(text="Name/Karosserienummer", size_hint=(0.5, 0.1)))
+        content.add_widget(Button(text="Name / VIN", size_hint=(0.5, 0.1)))
         content.add_widget(
             t := TextInput(size_hint=(0.5, 0.1), multiline=False, text=auto.text)
         )
         t.bind(text=auto.set_name)
+        Clock.schedule_once(lambda dt: setattr(t, 'focus', True), 0.1)
+        if new:
+            Clock.schedule_once(lambda dt: t.select_all(), 0.1)
         content.add_widget(
             s := ToggleButton(
                 text="10 AW",
                 size_hint=(0.5, 0.1),
                 group="aw",
                 state="down" if auto.aw10 else "normal",
+                allow_no_selection=False
             )
         )
         s.bind(state=self.auto.set_aw10)
@@ -231,6 +234,7 @@ class Tabs(TabbedPanel):
                 size_hint=(0.5, 0.1),
                 group="aw",
                 state="down" if not auto.aw10 else "normal",
+                allow_no_selection=False
             )
         )
         content.add_widget(
@@ -358,24 +362,32 @@ class Tabs(TabbedPanel):
         b.bind(on_press=self.delete_abfrage)
         content.add_widget(b := EditButton(size_hint=(1 / 3, 0.1)))
         b.bind(on_press=partial(self.edit_auto, new=False))
-        content.add_widget(TextInput(hint_text="Suche", size_hint=(1, 0.05)))
+        content.add_widget(ti:=TextInput(hint_text="Suche", size_hint=(1, 0.05)))
+        ti.bind(text=self.list_renew)
         content.add_widget(
             scv:= ScrollView(do_scroll_x=False, size_hint=(1, 1))
         )
-        scv.add_widget(bl:=BoxLayout(orientation = 'vertical', size_hint=(1,None),size=(0,0)))
+        self.startansicht_bl=BoxLayout(orientation = 'vertical', size_hint=(1,None),size=(0,0))
+        scv.add_widget(self.startansicht_bl)
+        self.list_renew(None,'')
+
+    def list_renew(self,textinput, value):
+        self.startansicht_bl.height=0
+        self.startansicht_bl.clear_widgets()
         for auto in self.auto_liste:
-            bl.add_widget(
-                b := ToggleButton(
-                    text=auto.text,
-                    size_hint=(1, 0.05),
-                    group="auto",
-                    allow_no_selection=False,
-                    state=auto.state,
+            if value.lower() in auto.text.lower():
+                self.startansicht_bl.add_widget(
+                    b := ToggleButton(
+                        text=auto.text,
+                        size_hint=(1, 0.05),
+                        group="auto",
+                        allow_no_selection=False,
+                        state=auto.state,
+                    )
                 )
-            )
-            b.auto = auto
-            b.bind(state=self.set_auto)
-            bl.height += dp(40)
+                b.auto = auto
+                b.bind(state=self.set_auto)
+                self.startansicht_bl.height += dp(40)
 
     def schadensaufnahme(self, *args):
         self.save()
@@ -455,21 +467,21 @@ class Tabs(TabbedPanel):
                 y = aw10s if teil.senkrecht else aw10w
             else:
                 y = aw12s if teil.senkrecht else aw12w
-            print(f"a {a} s {s}")
-            print(round(a / s - 1)) if s > 0 else 0
+            # print(f"a {a} s {s}")
+            # print(round(a / s - 1)) if s > 0 else 0
             aw = y[round(a / s - 1)](s) if s > 0 else 0
-            print(f"aw {aw}") if s > 0 else 0
+            # print(f"aw {aw}") if s > 0 else 0
             if teil.alu:
                 aw = aw * 1.25
-                extra.add_widget(Button(text="Alu"))
+                extra.add_widget(Button(text="Alu",background_color=(0,0,10)))
             if teil.kleben:
                 aw = aw * 1.4
-                extra.add_widget(Button(text="Kleben"))
+                extra.add_widget(Button(text="Kleben",background_color=(1,1,0)))
             if teil.press:
                 aw = aw * 0.6
-                extra.add_widget(Button(text="Drücken"))
-            print(f"aw {aw}") if s > 0 else 0
-            print(f"aw {aw}") if s > 0 else 0
+                extra.add_widget(Button(text="Drücken",background_color=(1,0,0)))
+            # print(f"aw {aw}") if s > 0 else 0
+            # print(f"aw {aw}") if s > 0 else 0
             stl.add_widget(
                 bt_name := Button(
                     text=teil.name, size_hint=(1, None), size=(0, Window.size[1] * 0.1)
