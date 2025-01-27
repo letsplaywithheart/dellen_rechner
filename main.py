@@ -63,7 +63,8 @@ Builder.load_string(
 """
 )
 
-#Window.softinput_mode = "pan"
+# Window.softinput_mode = "pan"
+
 
 @dataclass
 class delle:
@@ -95,7 +96,7 @@ class Teil:
     tauschen: bool = False
     dellen: list = list[delle]
     senkrecht: bool = False
-    aw10: bool = False
+    aw10: bool = True
 
     def __post_init__(self):
         self.dellen = [
@@ -143,7 +144,7 @@ class Auto:
             Teil("Kotflügel hinten links", senkrecht=True),
             Teil("Kotflügel hinten rechts", senkrecht=True),
             Teil("Heckklappe oben"),
-            Teil("Heckklappe unten"),
+            Teil("Heckklappe unten", senkrecht=True),
         ]
         self.aw10 = aw10
         self.state = "normal"
@@ -152,8 +153,9 @@ class Auto:
         self.text = value
 
     def set_aw10(self, button, value):
+        self.aw10 = not self.aw10
         for teil in self.teile:
-            teil.aw10 = not teil.aw10
+            teil.aw10 = self.aw10
 
 
 class EditButton(Button):
@@ -282,11 +284,16 @@ class Tabs(TabbedPanel):
         content.add_widget(
             Button(
                 text=self.auto.text,
+                on_press=self.schadensaufnahme,
                 size_hint=(1, 0.1),
                 background_color=(0.0, 1, 0.0),
             )
         )
-        content.add_widget(Button(text=teil.name, size_hint=(1, height)))
+        content.add_widget(
+            Button(
+                text=teil.name, on_press=self.schadensaufnahme, size_hint=(1, height)
+            )
+        )
         content.add_widget(
             b := ToggleButton(
                 text="Alu",
@@ -351,10 +358,13 @@ class Tabs(TabbedPanel):
         b.bind(on_press=self.delete_abfrage)
         content.add_widget(b := EditButton(size_hint=(1 / 3, 0.1)))
         b.bind(on_press=partial(self.edit_auto, new=False))
-        content.add_widget(TextInput(
-            hint_text='Suche', size_hint=(1,.05)))
+        content.add_widget(TextInput(hint_text="Suche", size_hint=(1, 0.05)))
+        content.add_widget(
+            scv:= ScrollView(do_scroll_x=False, size_hint=(1, 1))
+        )
+        scv.add_widget(bl:=BoxLayout(orientation = 'vertical', size_hint=(1,None),size=(0,0)))
         for auto in self.auto_liste:
-            content.add_widget(
+            bl.add_widget(
                 b := ToggleButton(
                     text=auto.text,
                     size_hint=(1, 0.05),
@@ -365,6 +375,7 @@ class Tabs(TabbedPanel):
             )
             b.auto = auto
             b.bind(state=self.set_auto)
+            bl.height += dp(40)
 
     def schadensaufnahme(self, *args):
         self.save()
@@ -373,137 +384,179 @@ class Tabs(TabbedPanel):
         content.add_widget(
             Button(
                 text=self.auto.text,
-                size_hint=(.7,0.1),
+                size_hint=(0.7, 0.1),
                 background_color=(0.0, 0.6, 0.0),
             )
         )
         content.add_widget(
-            bt_sum:=Button(
+            bt_sum := Button(
                 text=self.auto.text,
-                size_hint=(.3,0.1),
+                size_hint=(0.3, 0.1),
                 background_color=(1.0, 0, 0.0),
             )
         )
-        bt_sum.canvas.add(Color(rgba=(1, 0,0)))
+        bt_sum.canvas.add(Color(rgba=(1, 0, 0)))
         content.add_widget(
             bt_name := Label(
-                text='Teil',
+                text="Teil",
                 size_hint=(0.45, None),
                 size=(0, Window.size[1] * 0.05),
             )
         )
         content.add_widget(
             bt_aw := Label(
-                text='Gr',
+                text="Gr",
                 size_hint=(0.1, None),
                 size=(0, Window.size[1] * 0.05),
             )
         )
         content.add_widget(
             bt_aw := Label(
-                text='Anzahl',
+                text="Anzahl",
                 size_hint=(0.1, None),
                 size=(0, Window.size[1] * 0.05),
             )
         )
         content.add_widget(
             bt_aw := Label(
-                text='Extra',
+                text="Extra",
                 size_hint=(0.2, None),
                 size=(0, Window.size[1] * 0.05),
             )
         )
         content.add_widget(
             bt_aw := Label(
-                text='AW',
+                text="AW",
                 size_hint=(0.15, None),
                 size=(0, Window.size[1] * 0.05),
             )
         )
-        
+
         content.add_widget(
             scv := ScrollView(
                 do_scroll_x=False,
                 size_hint=(1, None),
-                size=(0, Window.size[1] * 0.9 - dp(40)) ,
+                size=(0, Window.size[1] * 0.9 - dp(40)),
             )
         )
         scv.add_widget(stl := StackLayout(size_hint=(1, None)))
-        summe=0
+        summe = 0
+        teile_gr_0 = 0
         finish = 13 if self.auto.aw10 else 15.5
         for teil in self.auto.teile:
-            extra = BoxLayout(orientation='vertical', size_hint=(.2, None), size=(0, Window.size[1] * 0.1 )) 
+            extra = BoxLayout(
+                orientation="vertical",
+                size_hint=(0.2, None),
+                size=(0, Window.size[1] * 0.1),
+            )
             s = sum(x.anzahl for x in teil.dellen)
-            a = sum(int((1+ x) * teil.dellen[x].anzahl) for x in range(8))
+            a = sum(int((1 + x) * teil.dellen[x].anzahl) for x in range(8))
             if teil.aw10:
                 y = aw10s if teil.senkrecht else aw10w
             else:
                 y = aw12s if teil.senkrecht else aw12w
-            aw = y[round(a / s /10+ 0.5)](a) if s > 0 else 0
+            print(f"a {a} s {s}")
+            print(round(a / s - 1)) if s > 0 else 0
+            aw = y[round(a / s - 1)](s) if s > 0 else 0
+            print(f"aw {aw}") if s > 0 else 0
             if teil.alu:
                 aw = aw * 1.25
-                extra.add_widget(Button(text='Alu'))
+                extra.add_widget(Button(text="Alu"))
             if teil.kleben:
-                aw = aw * 1.3
-                extra.add_widget(Button(text='Kleben'))
+                aw = aw * 1.4
+                extra.add_widget(Button(text="Kleben"))
             if teil.press:
                 aw = aw * 0.6
-                extra.add_widget(Button(text='Drücken'))
-            if aw >0:
-                aw = aw + 6
-                if teil.aw10:
-                    aw +=6
-                    if finish >2.5:
-                        aw+=2.5
-                        finish-=2.5
-                    elif finish>0:
-                        aw+=finish
-                        finish =0
-                else:
-                    aw +=7
-                    if finish >3:
-                        aw+=3
-                        finish-=3
-                    elif finish>0:
-                        aw+=finish
-                        finish =0
+                extra.add_widget(Button(text="Drücken"))
+            print(f"aw {aw}") if s > 0 else 0
+            print(f"aw {aw}") if s > 0 else 0
             stl.add_widget(
                 bt_name := Button(
-                    text=teil.name,
-                    size_hint=(1, None),
-                    size=(0, Window.size[1] * 0.1)
+                    text=teil.name, size_hint=(1, None), size=(0, Window.size[1] * 0.1)
                 )
             )
             stl.add_widget(
-                Button(
-                    text=str(10*round(a / s  + 0.5) ) if s>0 else '0' ,
-                    size_hint=(.1, None),
-                    size=(0, Window.size[1] * 0.1)
+                bt := Button(
+                    text=str(10 * round(a / s + 0.5)) if s > 0 else "0",
+                    size_hint=(0.1, None),
+                    size=(0, Window.size[1] * 0.1),
                 )
             )
+            bt.bind(on_press=partial(self.dellen_aufnehmen, teil))
             stl.add_widget(
-                Button(
-                    text=str(s) ,
-                    size_hint=(.1, None),
-                    size=(0, Window.size[1] * 0.1)
+                bt := Button(
+                    text=str(s), size_hint=(0.1, None), size=(0, Window.size[1] * 0.1)
                 )
             )
+            bt.bind(on_press=partial(self.dellen_aufnehmen, teil))
             stl.add_widget(extra)
             stl.height = stl.height + bt_name.height
-            # bt_name.text_size=(Window.size[0]/2-dp(20),None)
             bt_name.bind(on_press=partial(self.dellen_aufnehmen, teil))
-            if aw >0:
+            if aw > 0:
                 stl.add_widget(
                     bt_aw := Button(
-                        text=str(round(aw, 1)) , size_hint=(0.15, None), size=(0, Window.size[1] * 0.1)
+                        text=str(round(aw, 1)),
+                        size_hint=(0.15, None),
+                        size=(0, Window.size[1] * 0.1),
                     )
                 )
                 bt_aw.bind(on_press=partial(self.dellen_aufnehmen, teil))
-                
+
                 summe += aw
-            bt_name.size_hint_x = .45
-        # print(Window.size)
-        bt_sum.text=str(round(summe, 1)) 
+                teile_gr_0 += 1
+            bt_name.size_hint_x = 0.45
+        bt_sum.text = str(round(summe, 1))
+        if teile_gr_0 > 0:
+            stl.add_widget(
+                bt := Button(
+                    text="Rüstzeit",
+                    size_hint=(0.45, None),
+                    size=(0, Window.size[1] * 0.1),
+                ),
+                index=len(stl.children),
+            )
+            stl.add_widget(
+                bt := Label(
+                    text="", size_hint=(0.4, None), size=(0, Window.size[1] * 0.1)
+                ),
+                index=len(stl.children) - 1,
+            )
+            stl.add_widget(
+                bt := Button(
+                    text=str(6 if self.auto.aw10 else 7),
+                    size_hint=(0.15, None),
+                    size=(0, Window.size[1] * 0.1),
+                ),
+                index=len(stl.children) - 2,
+            )
+            stl.add_widget(
+                bt := Button(
+                    text="Finish",
+                    size_hint=(0.45, None),
+                    size=(0, Window.size[1] * 0.1),
+                ),
+                index=len(stl.children) - 3,
+            )
+            stl.add_widget(
+                bt := Label(
+                    text="", size_hint=(0.4, None), size=(0, Window.size[1] * 0.1)
+                ),
+                index=len(stl.children) - 4,
+            )
+            if teile_gr_0 > 5:
+                finish = 13 if self.auto.aw10 else 15.5
+            else:
+                finish = teile_gr_0 * (2.5 if self.auto.aw10 else 3)
+
+            stl.add_widget(
+                bt := Button(
+                    text=str(finish),
+                    size_hint=(0.15, None),
+                    size=(0, Window.size[1] * 0.1),
+                ),
+                index=len(stl.children) - 5,
+            )
+            stl.height = stl.height + bt_name.height
 
     def aw_tabelle(self):
         self.save()
