@@ -398,14 +398,15 @@ class Tabs(TabbedPanel):
         content.add_widget(
             Button(
                 text=self.auto.text,
-                size_hint=(0.7, 0.1),
+                size_hint=(0.7, None),
+                size=(0, dp(60)), 
                 background_color=(0.0, 0.6, 0.0),
             )
         )
         content.add_widget(
             bt_sum := Button(
-                text=self.auto.text,
-                size_hint=(0.3, 0.1),
+                size_hint=(0.3, None),
+                size=(0, dp(60)), 
                 background_color=(1.0, 0, 0.0),
             )
         )
@@ -414,35 +415,35 @@ class Tabs(TabbedPanel):
             bt_name := Label(
                 text="Teil",
                 size_hint=(0.45, None),
-                size=(0, dp(20)),
+                size=(0, dp(30)),
             )
         )
         content.add_widget(
             bt_aw := Label(
-                text="Gr",
+                text="mm",
                 size_hint=(0.1, None),
-                size=(0, dp(20)),
+                size=(0, dp(30)),
             )
         )
         content.add_widget(
             bt_aw := Label(
                 text="Anzahl",
                 size_hint=(0.1, None),
-                size=(0, dp(20)),
+                size=(0, dp(30)),
             )
         )
         content.add_widget(
             bt_aw := Label(
                 text="Extra",
                 size_hint=(0.2, None),
-                size=(0, dp(20)),
+                size=(0, dp(30)),
             )
         )
         content.add_widget(
             bt_aw := Label(
                 text="AW",
                 size_hint=(0.15, None),
-                size=(0, dp(20)),
+                size=(0, dp(30)),
             )
         )
 
@@ -450,7 +451,7 @@ class Tabs(TabbedPanel):
             scv := ScrollView(
                 do_scroll_x=False,
                 size_hint=(1, None),
-                size=(0, Window.size[1] - dp(60)),
+                size=(0, Window.size[1] - dp(136)),
             )
         )
         scv.add_widget(stl := StackLayout(size_hint=(1, None)))
@@ -519,7 +520,6 @@ class Tabs(TabbedPanel):
                 summe += aw
                 teile_gr_0 += 1
             bt_name.size_hint_x = 0.45
-        bt_sum.text = str(round(summe, 1))
         if teile_gr_0 > 0:
             stl.add_widget(
                 bt := Button(
@@ -535,9 +535,11 @@ class Tabs(TabbedPanel):
                 ),
                 index=len(stl.children) - 1,
             )
+            ruestzeit =6 if self.auto.aw10 else 7
+            summe += ruestzeit
             stl.add_widget(
                 bt := Button(
-                    text=str(6 if self.auto.aw10 else 7),
+                    text=str(ruestzeit),
                     size_hint=(0.15, None),
                     size=(0, dp(40)),
                 ),
@@ -561,7 +563,7 @@ class Tabs(TabbedPanel):
                 finish = 13 if self.auto.aw10 else 15.5
             else:
                 finish = teile_gr_0 * (2.5 if self.auto.aw10 else 3)
-
+            summe += finish
             stl.add_widget(
                 bt := Button(
                     text=str(finish),
@@ -571,6 +573,8 @@ class Tabs(TabbedPanel):
                 index=len(stl.children) - 5,
             )
             stl.height = stl.height + bt_name.height
+        bt_sum.text = str(round(summe, 1)) 
+            
 
     def aw_tabelle(self):
         self.save()
