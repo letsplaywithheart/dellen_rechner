@@ -19,9 +19,12 @@ from kivy.clock import Clock
 from bvat import aw10s, aw10w, aw12s, aw12w
 from kivy.core.window import Window
 
-Builder.load_string(
-    """
+from lang import ger, rus, rum
+# Dictionary with translations
+l = rus
 
+Builder.load_string(
+    f"""
 <Tabs>
     id:tabs
     tab_pos:'bottom_mid'
@@ -30,7 +33,8 @@ Builder.load_string(
     tab_height: dp(40)
         
     TabbedPanelItem:
-        text: 'Autos'
+        # text: l["Autos"]
+        id: tab_autos
         size_hint: (0.1, 0.1)
         on_state: if self.state=='down' : root.startansicht()
         StackLayout:
@@ -39,23 +43,16 @@ Builder.load_string(
             orientation:'lr-tb'
                 
     TabbedPanelItem:
-        text: 'Hagel'
+        # text: l["Hagel"]
+        id: tab_hagel
         on_state: if self.state=='down' : root.schadensaufnahme()
         StackLayout:
             id:hagel
             orientation: 'lr-tb'
             size_hint:(1,1)
-            
-#    TabbedPanelItem:
-#        id: tabelle
-#        text: 'Foto'
-#        on_state: if self.state=='down' : root.aw_tabelle()
-#        StackLayout:
-#            size_hint:(1,1)
 
-<EditButton>
+<IconButton>
     size_hint: (1/3, None)
-    # on_press: root.parent.edit_auto(auto=root.auto)
     Image:
         source: 'pen.png'
         size: self.parent.height*0.7,self.parent.height*0.7
@@ -63,9 +60,6 @@ Builder.load_string(
         x: self.parent.x + self.parent.size[0]/2 - self.size[0]/2
 """
 )
-
-# Window.softinput_mode = "pan"
-
 
 @dataclass
 class delle:
@@ -79,12 +73,12 @@ class delle:
             self.anzahl = int(x)
 
     def incr_anzahl(self, Ii, bt):
-        self.anzahl = self.anzahl + 1
+        self.anzahl += 1
         Ii.text = str(self.anzahl)
 
     def decr_anzahl(self, Ii, bt):
         if self.anzahl > 0:
-            self.anzahl = self.anzahl - 1
+            self.anzahl -= 1
             Ii.text = str(self.anzahl)
 
 
@@ -94,7 +88,7 @@ class Teil:
     alu: bool = False
     kleben: bool = False
     press: bool = False
-    tauschen: bool = False
+    hoch: bool = False
     dellen: list = list[delle]
     senkrecht: bool = False
     aw10: bool = True
@@ -117,8 +111,8 @@ class Teil:
     def set_alu(self, x, y):
         self.alu = not self.alu
 
-    def set_tauschen(self, x, y):
-        self.tauschen = not self.tauschen
+    def set_hoch(self, x, y):
+        self.hoch = not self.hoch
 
     def set_press(self, x, y):
         self.press = not self.press
@@ -159,7 +153,7 @@ class Auto:
             teil.aw10 = self.aw10
 
 
-class EditButton(Button):
+class IconButton(Button):
     pass
 
 
@@ -183,7 +177,7 @@ class IntInput(TextInput):
 
 class Tabs(TabbedPanel):
     auto = Auto()
-    auto_liste = [Auto(name="Tina"), Auto(name="Andi"), Auto(name="Erika")]
+    auto_liste = [Auto(name=l["Beispielauto"]), Auto(name="Andi"), Auto(name="Erika")]
 
     def __init__(self, **kwargs):
         super(Tabs, self).__init__(**kwargs)
@@ -197,6 +191,8 @@ class Tabs(TabbedPanel):
             auto.state = "normal"
         self.auto = self.auto_liste[0]
         self.auto.state = "down"
+        self.ids.tab_autos.text = l["Autos"]
+        self.ids.tab_hagel.text = l["Hagel"]
 
     def save(self):
         with open("auto_liste", "wb") as file:
@@ -211,7 +207,7 @@ class Tabs(TabbedPanel):
         auto = Auto() if new else self.auto
         content = self.ids.startansicht
         content.clear_widgets()
-        content.add_widget(Button(text="Name / VIN", size_hint=(0.5, 0.1)))
+        content.add_widget(Button(text=l["Name / VIN"], size_hint=(0.5, 0.1)))
         content.add_widget(
             t := TextInput(size_hint=(0.5, 0.1), multiline=False, text=auto.text)
         )
@@ -221,7 +217,7 @@ class Tabs(TabbedPanel):
             Clock.schedule_once(lambda dt: t.select_all(), 0.1)
         content.add_widget(
             s := ToggleButton(
-                text="10 AW",
+                text=l["10 AW"],
                 size_hint=(0.5, 0.1),
                 group="aw",
                 state="down" if auto.aw10 else "normal",
@@ -231,7 +227,7 @@ class Tabs(TabbedPanel):
         s.bind(state=self.auto.set_aw10)
         content.add_widget(
             ToggleButton(
-                text="12 AW",
+                text=l["12 AW"],
                 size_hint=(0.5, 0.1),
                 group="aw",
                 state="down" if not auto.aw10 else "normal",
@@ -239,12 +235,12 @@ class Tabs(TabbedPanel):
             )
         )
         content.add_widget(
-            b := Button(text="Fertig", size_hint=(0.5, 0.1), background_color=(0, 1, 0))
+            b := Button(text=l["Fertig"], size_hint=(0.5, 0.1), background_color=(0, 1, 0))
         )
         b.bind(on_press=partial(self.add_Auto, auto))
         content.add_widget(
             b := Button(
-                text="Abbrechen", size_hint=(0.5, 0.1), background_color=(1, 0, 0)
+                text=l["Abbrechen"], size_hint=(0.5, 0.1), background_color=(1, 0, 0)
             )
         )
         b.bind(on_press=self.startansicht)
@@ -263,21 +259,21 @@ class Tabs(TabbedPanel):
         content = self.ids.startansicht
         content.clear_widgets()
         content.add_widget(
-            Label(text="Möchtest du das Auto wirklich löschen? ", size_hint=(1, 0.1))
+            Label(text=l["Möchtest du das Auto wirklich löschen? "], size_hint=(1, 0.1))
         )
         content.add_widget(
-            b := Button(text="Ja", size_hint=(0.5, 0.1), background_color=(0, 1, 0))
+            b := Button(text=l["Ja"], size_hint=(0.5, 0.1), background_color=(0, 1, 0))
         )
         b.bind(on_press=self.delete_auto)
         content.add_widget(
-            b := Button(text="Nein", size_hint=(0.5, 0.1), background_color=(1, 0, 0))
+            b := Button(text=l["Nein"], size_hint=(0.5, 0.1), background_color=(1, 0, 0))
         )
         b.bind(on_press=self.startansicht)
 
     def delete_auto(self, button):
         self.auto_liste.remove(self.auto)
         if len(self.auto_liste) <= 0:
-            self.auto_liste.append(Auto(name="Beispielauto"))
+            self.auto_liste.append(Auto(name=l["Beispielauto"]))
         self.auto = self.auto_liste[0]
         self.auto.state = "down"
         self.startansicht()
@@ -296,12 +292,12 @@ class Tabs(TabbedPanel):
         )
         content.add_widget(
             Button(
-                text=teil.name, on_press=self.schadensaufnahme, size_hint=(1, height)
+                text=l[teil.name], on_press=self.schadensaufnahme, size_hint=(1, height)
             )
         )
         content.add_widget(
             b := ToggleButton(
-                text="Alu",
+                text=l["Alu"],
                 size_hint=(0.25, height),
                 state="down" if teil.alu else "normal",
             )
@@ -309,7 +305,7 @@ class Tabs(TabbedPanel):
         b.bind(state=teil.set_alu)
         content.add_widget(
             b := ToggleButton(
-                text="Kleben",
+                text=l["Kleben"],
                 size_hint=(0.25, height),
                 state="down" if teil.kleben else "normal",
             )
@@ -317,7 +313,7 @@ class Tabs(TabbedPanel):
         b.bind(state=teil.set_kleben)
         content.add_widget(
             b := ToggleButton(
-                text="Drücken",
+                text=l["Drücken"],
                 size_hint=(0.25, height),
                 state="down" if teil.press else "normal",
             )
@@ -325,12 +321,12 @@ class Tabs(TabbedPanel):
         b.bind(state=teil.set_press)
         content.add_widget(
             b := ToggleButton(
-                text="Tauschen",
+                text="1,6m",
                 size_hint=(0.25, height),
-                state="down" if teil.tauschen else "normal",
+                state="down" if teil.hoch else "normal",
             )
         )
-        b.bind(state=teil.set_tauschen)
+        b.bind(state=teil.set_hoch)
         for delle in teil.dellen:
             content.add_widget(bt := Button(text=delle.name, size_hint=(0.3, height)))
             Ii = IntInput(text=str(delle.anzahl), size_hint=(0.3, height))
@@ -342,7 +338,7 @@ class Tabs(TabbedPanel):
             bt.bind(on_press=partial(delle.incr_anzahl, Ii))
         content.add_widget(
             Button(
-                text="Fertig",
+                text=l["Fertig"],
                 on_press=self.schadensaufnahme,
                 size_hint=(1, 0.1),
                 background_color=(0.0, 1.0, 0.0, 1.0),
@@ -361,9 +357,9 @@ class Tabs(TabbedPanel):
             b := Button(text="-", size_hint=(1 / 3, 0.1), background_color=(1, 0, 0))
         )
         b.bind(on_press=self.delete_abfrage)
-        content.add_widget(b := EditButton(size_hint=(1 / 3, 0.1)))
+        content.add_widget(b := IconButton(size_hint=(1 / 3, 0.1)))
         b.bind(on_press=partial(self.edit_auto, new=False))
-        content.add_widget(ti:=TextInput(hint_text="Suche", size_hint=(1, 0.05)))
+        content.add_widget(ti:=TextInput(hint_text=l["Suche"], size_hint=(1, 0.05)))
         ti.bind(text=self.list_renew)
         content.add_widget(
             scv:= ScrollView(do_scroll_x=False, size_hint=(1, None), size=(0, Window.size[1]*0.85-dp(40)))
@@ -413,35 +409,35 @@ class Tabs(TabbedPanel):
         bt_sum.canvas.add(Color(rgba=(1, 0, 0)))
         content.add_widget(
             bt_name := Label(
-                text="Teil",
+                text=l["Teil"],
                 size_hint=(0.45, None),
                 size=(0, dp(30)),
             )
         )
         content.add_widget(
             bt_aw := Label(
-                text="mm",
+                text=l["mm"],
                 size_hint=(0.1, None),
                 size=(0, dp(30)),
             )
         )
         content.add_widget(
             bt_aw := Label(
-                text="Anzahl",
+                text=l["Anzahl"],
                 size_hint=(0.1, None),
                 size=(0, dp(30)),
             )
         )
         content.add_widget(
             bt_aw := Label(
-                text="Extra",
+                text=l["Extra"],
                 size_hint=(0.2, None),
                 size=(0, dp(30)),
             )
         )
         content.add_widget(
             bt_aw := Label(
-                text="AW",
+                text=l["AW"],
                 size_hint=(0.15, None),
                 size=(0, dp(30)),
             )
@@ -470,24 +466,19 @@ class Tabs(TabbedPanel):
                 y = aw10s if teil.senkrecht else aw10w
             else:
                 y = aw12s if teil.senkrecht else aw12w
-            # print(f"a {a} s {s}")
-            # print(round(a / s - 1)) if s > 0 else 0
             aw = y[round(a / s - 1)](s) if s > 0 else 0
-            # print(f"aw {aw}") if s > 0 else 0
             if teil.alu:
                 aw = aw * 1.25
-                extra.add_widget(Button(text="Alu",background_color=(0,0,10)))
+                extra.add_widget(Button(text=l["Alu"], background_color=(0, 0, 10)))
             if teil.kleben:
                 aw = aw * 1.4
-                extra.add_widget(Button(text="Kleben",background_color=(1,1,0)))
+                extra.add_widget(Button(text=l["Kleben"], background_color=(1, 1, 0)))
             if teil.press:
                 aw = aw * 0.6
-                extra.add_widget(Button(text="Drücken",background_color=(1,0,0)))
-            # print(f"aw {aw}") if s > 0 else 0
-            # print(f"aw {aw}") if s > 0 else 0
+                extra.add_widget(Button(text=l["Drücken"], background_color=(1, 0, 0)))
             stl.add_widget(
                 bt_name := Button(
-                    text=teil.name, size_hint=(1, None), size=(0, dp(40))
+                    text=l[teil.name], size_hint=(1, None), size=(0, dp(40))
                 )
             )
             stl.add_widget(
@@ -523,7 +514,7 @@ class Tabs(TabbedPanel):
         if teile_gr_0 > 0:
             stl.add_widget(
                 bt := Button(
-                    text="Rüstzeit",
+                    text=l["Rüstzeit"],
                     size_hint=(0.45, None),
                     size=(0, dp(40)),
                 ),
@@ -535,7 +526,7 @@ class Tabs(TabbedPanel):
                 ),
                 index=len(stl.children) - 1,
             )
-            ruestzeit =6 if self.auto.aw10 else 7
+            ruestzeit = 6 if self.auto.aw10 else 7
             summe += ruestzeit
             stl.add_widget(
                 bt := Button(
@@ -547,7 +538,7 @@ class Tabs(TabbedPanel):
             )
             stl.add_widget(
                 bt := Button(
-                    text="Finish",
+                    text=l["Finish"],
                     size_hint=(0.45, None),
                     size=(0, dp(40)),
                 ),
