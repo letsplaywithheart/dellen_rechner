@@ -33,6 +33,8 @@ ger={
     "Anzahl":"Anzahl",
     "Extra":"Extra",
     "AW":"AW",
+    "Rüstzeit":"Rüstzeit",
+    "Finish":"Finish",
 }
 
 rus={
@@ -69,7 +71,9 @@ rus={
     "mm": "мм",
     "Anzahl": "Количество",
     "Extra": "Дополнительно",
-    "AW": "AW"
+    "AW": "AW",
+    "Rüstzeit":"время на наладку",
+    "Finish":"финиш",
 }
 
 rum={
@@ -106,5 +110,7 @@ rum={
     "mm": "mm",
     "Anzahl": "Număr",
     "Extra": "Extra",
-    "AW": "AW"
+    "AW": "AW",
+    "Rüstzeit":"Timp de configurare",
+    "Finish":"Termina",
 }

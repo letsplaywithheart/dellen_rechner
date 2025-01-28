@@ -21,7 +21,7 @@ from kivy.core.window import Window
 
 from lang import ger, rus, rum
 # Dictionary with translations
-l = rus
+l = ger
 
 Builder.load_string(
     f"""
@@ -54,12 +54,25 @@ Builder.load_string(
 <IconButton>
     size_hint: (1/3, None)
     Image:
-        source: 'pen.png'
+        source: root.icon
         size: self.parent.height*0.7,self.parent.height*0.7
         y: self.parent.y + self.parent.size[1]/2 - self.size[1]/2
         x: self.parent.x + self.parent.size[0]/2 - self.size[0]/2
 """
 )
+
+def set_ger(x):
+    global l
+    l = ger
+    x.parent.parent.parent.startansicht()
+def set_rum(x):
+    global l
+    l = rum
+    x.parent.parent.parent.startansicht()
+def set_rus(x):
+    global l
+    l = rus
+    x.parent.parent.parent.startansicht()
 
 @dataclass
 class delle:
@@ -154,7 +167,12 @@ class Auto:
 
 
 class IconButton(Button):
-    pass
+    def __init__(self, **kwargs):
+        if 'icon' in kwargs:
+            self.icon = kwargs.pop('icon')
+        else:
+            self.icon = 'pen.png'
+        super(IconButton, self).__init__(**kwargs)
 
 
 class IntInput(TextInput):
@@ -191,8 +209,6 @@ class Tabs(TabbedPanel):
             auto.state = "normal"
         self.auto = self.auto_liste[0]
         self.auto.state = "down"
-        self.ids.tab_autos.text = l["Autos"]
-        self.ids.tab_hagel.text = l["Hagel"]
 
     def save(self):
         with open("auto_liste", "wb") as file:
@@ -347,8 +363,16 @@ class Tabs(TabbedPanel):
 
     def startansicht(self, *args):
         self.save()
+        self.ids.tab_autos.text = l["Autos"]
+        self.ids.tab_hagel.text = l["Hagel"]
         content = self.ids.startansicht
         content.clear_widgets()
+        content.add_widget(b := IconButton(size_hint=(1 / 3, 0.1), icon='ger.png'))
+        b.bind(on_press=set_ger)
+        content.add_widget(b := IconButton(size_hint=(1 / 3, 0.1), icon='rum.png'))
+        b.bind(on_press=set_rum)
+        content.add_widget(b := IconButton(size_hint=(1 / 3, 0.1), icon='rus.png'))
+        b.bind(on_press=set_rus)
         content.add_widget(
             b := Button(text="+", size_hint=(1 / 3, 0.1), background_color=(0, 1, 0))
         )
